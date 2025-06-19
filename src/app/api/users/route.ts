@@ -1,116 +1,101 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UserFacade } from '../../facades/UserFacade';
+import { Container } from '../../decorators';
 
-const userFacade = new UserFacade();
+const userFacade = Container.getFacade('UserFacade');
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const id = searchParams.get('id');
-  const query = searchParams.get('query');
-
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const query = searchParams.get('query');
+    const id = searchParams.get('id');
+
+    let response;
     if (id) {
-      const result = await userFacade.getUserById(Number(id));
-      if (!result.success) {
-        return NextResponse.json({ error: result.error }, { status: 404 });
+      response = await userFacade.getUserById(id);
+      if (!response) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
-      return NextResponse.json(result.data);
+    } else if (query) {
+      response = await userFacade.searchUsers(query);
+    } else {
+      response = await userFacade.getAllUsers();
     }
 
-    if (query) {
-      const result = await userFacade.searchUsers(query);
-      if (!result.success) {
-        return NextResponse.json({ error: result.error }, { status: 500 });
-      }
-      return NextResponse.json(result.data);
-    }
-
-    const result = await userFacade.getAllUsers();
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
-    }
-    return NextResponse.json(result.data);
+    return NextResponse.json(response);
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const result = await userFacade.createUser(body);
-
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
-    }
-
-    return NextResponse.json(result.data, { status: 201 });
+    const data = await request.json();
+    const user = await userFacade.createUser(data);
+    return NextResponse.json(user, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get('id');
-
+    const data = await request.json();
+    const id = request.nextUrl.searchParams.get('id');
+    
     if (!id) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const body = await request.json();
-    const result = await userFacade.updateUser(Number(id), body);
-
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 404 });
-    }
-
-    return NextResponse.json(result.data);
+    const user = await userFacade.updateUser(id, data);
+    return NextResponse.json(user);
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get('id');
-
+    const data = await request.json();
+    const id = request.nextUrl.searchParams.get('id');
+    
     if (!id) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const body = await request.json();
-    const result = await userFacade.patchUser(Number(id), body);
-
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 404 });
-    }
-
-    return NextResponse.json(result.data);
+    const user = await userFacade.patchUser(id, data);
+    return NextResponse.json(user);
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get('id');
-
+    const id = request.nextUrl.searchParams.get('id');
+    
     if (!id) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const result = await userFacade.deleteUser(Number(id));
-
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 404 });
-    }
-
-    return NextResponse.json(result.data);
+    const user = await userFacade.deleteUser(id);
+    return NextResponse.json(user);
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

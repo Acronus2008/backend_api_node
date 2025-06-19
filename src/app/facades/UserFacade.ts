@@ -1,116 +1,72 @@
-import { User, Prisma } from '@prisma/client';
+import { Facade, InjectService } from '../decorators';
 import { UserService } from '../services/UserService';
+import { User, UserCreateInput, UserUpdateInput } from '../types/user.types';
 
+@Facade()
 export class UserFacade {
-  private userService: UserService;
+  @InjectService(UserService)
+  private userService!: UserService;
 
-  constructor() {
-    this.userService = new UserService();
-  }
-
-  async getAllUsers(): Promise<{
-    success: boolean;
-    data?: User[];
-    error?: string;
-  }> {
+  async getAllUsers(): Promise<User[]> {
     try {
-      const users = await this.userService.getAllUsers();
-      return { success: true, data: users };
-    } catch (error) {
-      return { success: false, error: 'Failed to fetch users' };
+      return await this.userService.getAllUsers();
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to get users: ${errorMessage}`);
     }
   }
 
-  async getUserById(id: number): Promise<{
-    success: boolean;
-    data?: User;
-    error?: string;
-  }> {
+  async getUserById(id: string): Promise<User | null> {
     try {
-      const user = await this.userService.getUserById(id);
-      if (!user) {
-        return { success: false, error: 'User not found' };
-      }
-      return { success: true, data: user };
-    } catch (error) {
-      return { success: false, error: 'Failed to fetch user' };
+      return await this.userService.getUserById(id);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to get user: ${errorMessage}`);
     }
   }
 
-  async searchUsers(query: string): Promise<{
-    success: boolean;
-    data?: User[];
-    error?: string;
-  }> {
+  async searchUsers(query: string): Promise<User[]> {
     try {
-      const users = await this.userService.searchUsers(query);
-      return { success: true, data: users };
-    } catch (error) {
-      return { success: false, error: 'Failed to search users' };
+      return await this.userService.searchUsers(query);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to search users: ${errorMessage}`);
     }
   }
 
-  async createUser(userData: Prisma.UserCreateInput): Promise<{
-    success: boolean;
-    data?: User;
-    error?: string;
-  }> {
+  async createUser(data: UserCreateInput): Promise<User> {
     try {
-      const user = await this.userService.createUser(userData);
-      return { success: true, data: user };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to create user'
-      };
+      return await this.userService.createUser(data);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to create user: ${errorMessage}`);
     }
   }
 
-  async updateUser(id: number, userData: Prisma.UserUpdateInput): Promise<{
-    success: boolean;
-    data?: User;
-    error?: string;
-  }> {
+  async updateUser(id: string, data: UserUpdateInput): Promise<User> {
     try {
-      const user = await this.userService.updateUser(id, userData);
-      return { success: true, data: user };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to update user'
-      };
+      return await this.userService.updateUser(id, data);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to update user: ${errorMessage}`);
     }
   }
 
-  async patchUser(id: number, userData: Prisma.UserUpdateInput): Promise<{
-    success: boolean;
-    data?: User;
-    error?: string;
-  }> {
+  async patchUser(id: string, data: Partial<UserUpdateInput>): Promise<User> {
     try {
-      const user = await this.userService.patchUser(id, userData);
-      return { success: true, data: user };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to patch user'
-      };
+      return await this.userService.patchUser(id, data);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to patch user: ${errorMessage}`);
     }
   }
 
-  async deleteUser(id: number): Promise<{
-    success: boolean;
-    data?: User;
-    error?: string;
-  }> {
+  async deleteUser(id: string): Promise<void> {
     try {
-      const user = await this.userService.deleteUser(id);
-      return { success: true, data: user };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to delete user'
-      };
+      await this.userService.deleteUser(id);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to delete user: ${errorMessage}`);
     }
   }
 }

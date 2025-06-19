@@ -1,18 +1,17 @@
-import { User, Prisma } from '@prisma/client';
-import { UserRepository } from '../repositories/UserRepository';
+import { Service, InjectRepository } from '../decorators';
+import { UserRepository } from './repository/UserRepository';
+import { User, UserCreateInput, UserUpdateInput } from '../types/user.types';
 
+@Service()
 export class UserService {
-  private userRepository: UserRepository;
-
-  constructor() {
-    this.userRepository = new UserRepository();
-  }
+  @InjectRepository(UserRepository)
+  private userRepository!: UserRepository;
 
   async getAllUsers(): Promise<User[]> {
     return this.userRepository.findAll();
   }
 
-  async getUserById(id: number): Promise<User | null> {
+  async getUserById(id: string): Promise<User | null> {
     return this.userRepository.findById(id);
   }
 
@@ -20,45 +19,47 @@ export class UserService {
     return this.userRepository.search(query);
   }
 
-  async createUser(userData: Prisma.UserCreateInput): Promise<User> {
-    // Add any business logic validation here
-    if (!userData.email) {
-      throw new Error('Email is required');
-    }
-    if (!userData.email.includes('@')) {
-      throw new Error('Invalid email format');
+  async createUser(data: UserCreateInput): Promise<User> {
+    // Basic validation
+    if (!data || !data.email.includes('@')) {
+      throw new Error('Invalid email address');
     }
 
-    return this.userRepository.create(userData);
+    return this.userRepository.create(data);
   }
 
-  async updateUser(id: number, userData: Prisma.UserUpdateInput): Promise<User> {
+  async updateUser(id: string, data: UserUpdateInput): Promise<User> {
+    // Check if user exists
     const existingUser = await this.userRepository.findById(id);
     if (!existingUser) {
       throw new Error('User not found');
     }
 
-    if (userData.email && typeof userData.email === 'string' && !userData.email.includes('@')) {
-      throw new Error('Invalid email format');
+    // Validate email if it's being updated
+    if (data.email && !data.email.includes('@')) {
+      throw new Error('Invalid email address');
     }
 
-    return this.userRepository.update(id, userData);
+    return this.userRepository.update(id, data);
   }
 
-  async patchUser(id: number, userData: Prisma.UserUpdateInput): Promise<User> {
+  async patchUser(id: string, data: Partial<UserUpdateInput>): Promise<User> {
+    // Check if user exists
     const existingUser = await this.userRepository.findById(id);
     if (!existingUser) {
       throw new Error('User not found');
     }
 
-    if (userData.email && typeof userData.email === 'string' && !userData.email.includes('@')) {
-      throw new Error('Invalid email format');
+    // Validate email if it's being updated
+    if (data?.email && !data?.email.includes('@')) {
+      throw new Error('Invalid email address');
     }
 
-    return this.userRepository.patch(id, userData);
+    return this.userRepository.patch(id, data);
   }
 
-  async deleteUser(id: number): Promise<User> {
+  async deleteUser(id: string): Promise<User> {
+    // Check if user exists
     const existingUser = await this.userRepository.findById(id);
     if (!existingUser) {
       throw new Error('User not found');
